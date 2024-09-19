@@ -42,9 +42,14 @@ O projeto seguirá as fases do Data Analytics Lifecycle:
 ## Implementação das fases
 
 - **Descoberta** : Nessa etapa foi compreendido o domínio do problema de análise de logs de segurança no Linux. Além disso, foram delimitadas quais perguntas de pesquisa serão respondidas. 
-- **Preparação dos dados**: Os dados brutos foram obtidos a partir do comando <code> head -n 10000 /var/log/auth.log > sample_auth_log_10000_Sep_12_24.txt </code>. Em seguida, foi realizada a transformação dessa base de dados em um formato analisável por meio do arquivo <code> log_transformation.py </code>.
+- **Preparação dos dados**: Os dados brutos foram obtidos a partir do comando <code> head -n 10000 /var/log/auth.log > sample_auth_log_10000_Sep_12_24.txt</code>. Em seguida, foi realizada a transformação dessa base de dados em um formato analisável por meio do arquivo <code> log_transformation.py</code>.
 - **Planejamento do modelo**: Foram selecionadas as variáveis e métricas que melhor supriam as necessidades de pesquisa.
 - **Construção do modelo**: A análise é realizada sobre uma base de dados reduzida. Tal análise é suficiente para responder as questões de negócio.
 - **Comunicar os resultados**: A comunicação dos resultados é feita no próprio arquivo que contém código e análise.
 - **Operacionalizar**: A análise é exportada em um formato viável para compartilhamento e execução por vários stakeholders.
 
+## Resultados
+
+A análise completa está presente no arquivo <code>.html</code>, que pode ser baixado e executado localmente no navegador. Segue uma pequena parte da análise. Um gráfico que responde a primeira pergunta referente à frequência de logs por serviço. 
+
+![Alt text](service_log_frequency.png "Frequência de logs por serviço")
