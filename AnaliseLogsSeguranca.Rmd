@@ -1,0 +1,141 @@
+---
+title: "AnaliseLogsSeguranca"
+author: "Eduardo Vitor"
+date: "2024-09-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+ knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Carregamento das bibliotecas necessárias
+```{r loading_libs}
+ library(tidyverse)
+ library(dplyr)
+ library(lubridate)
+ library(kableExtra)
+ library(stringr) 
+```
+
+## Carregamento dos dados
+```{r loading data}
+  workdir ="/home/eduardovitor/Downloads/ProjetoLogsCybersec/"
+  logs = paste(workdir,"logs-auth.csv",sep="")
+  df_logs = read_csv(logs)
+```
+
+##  Fase de planejamento do modelo e fase de construção do modelo - ações: seleção de variáveis e métricas e redução do dataframe
+
+Dados adicionais derivados do timestamp foram adicionados para fins de análise. Além disso, o mês de julho foi removido da análise devido a ínfima quantidade de dados (somente dois dias). 
+
+```{r transforming data}
+  df_logs <- df_logs %>% mutate("Day" = mday(Timestamp), "Month" = month(Timestamp), "Year" = year(Timestamp), "Hour" = hour(Timestamp)) %>% filter(Month!=7)
+```
+
+## Fase de comunicação dos resultados
+
+### Respondendo a pergunta (Qual a frequência de logs de cada serviço?)
+
+O top 5 de serviços com logs foi: 
+
+- systemd-logind (2601, isto é 26,3%): Responsável por gerenciar sessões de login;
+- CRON (1900, isto é 19,2%): Relacionado à execução de tarefas agendadas;
+- lightdm (1804, isto é 18,2%): Gerenciador de login gráfico do sistema;
+- pkexec (1402, isto é 14,2%): Programa para executar comandos como outro usuário;
+- sudo (742, isto é 7,5%): Permite que um usuário execute comandos como superusuário.
+
+Esses serviços somados resultam em 85,4% do total de logs. Assim, depreende-se que as atividades de autenticação e autorização no sistema está concentrada nesses serviços.
+
+
+```{r calculating service logs frequency - research question 1, echo=FALSE}
+df_service_logs_frequency <- df_logs %>%
+group_by(Service) %>% 
+summarise(Frequency=n(), Frequency_Pct=round((n()/nrow(df_logs))*100,digits=1)) %>% 
+arrange(desc(Frequency)) 
+```
+
+```{r displaying table for service logs}
+  df_service_logs_frequency %>% 
+  kbl() %>%
+  kable_material()
+```
+
+
+```{r displaying bar chart for service logs}
+  df_service_logs_frequency %>%
+  ggplot() +
+  geom_col(aes(Frequency, Service), fill = "PURPLE", width = 0.9)+ 
+  theme_minimal()
+```
+
+### Respondendo a pergunta (Quantas e quais tentativas de autenticação falharam?)
+
+9 tentativas de autenticação falharam. O dia e horário delas são distintos, o que indica que não há um padrão de tentativas maliciosas de login. As falhas foram resultado de ações não-intencionais de erro de senha do usuário.  
+```{r filtering failed authentications - research question 2}
+  msg_failure = "failed"
+  df_failures <- df_logs %>% filter(str_detect(df_logs$Message,msg_failure)) 
+```
+
+```{r displaying failed authentications dataframe}
+  df_failures %>% 
+  kbl() %>%
+  kable_material()
+```
+
+### Respondendo a pergunta (Quantas sessões de root são abertas em média por dia?)
+
+A média de sessões abertas de root por dia no mês de abril foi de 18.  Já no mês de maio foi de 21 e no mês de junho foi de 24. Tal fato indica que a quantidade de sessões de root abertas seguem um padrão homogêneo, provavelmente correspondente a um padrão de comportamento comum do usuário.  
+
+```{r understanding the count of opened root sessions throughout time - research question 3}
+    root_user = "root"
+    root_session = "session opened"
+    df_root <- 
+      df_logs %>% 
+      filter(str_detect(Message,root_user)) %>% 
+      filter(str_detect(Message,root_session)) %>% 
+      group_by(Month) %>% 
+      summarise(
+        Frequency = n(),
+        Avg_Root_Open_Sessions_Day = round((Frequency/unique(days_in_month(Month))),digits=0)
+      )
+```
+
+
+```{r displaying table for opened root sessions}
+  df_root %>% 
+  kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+### Respondendo a pergunta (Quais são os horários de pico de tentativas de login?)
+
+Os horários de pico de login no sistema são 14PM, 10AM, 19PM, 20PM e 5AM (Horário de 24 horas). Os eventos de login nesses horários contabilizam 55,6% do total de eventos. 
+```{r understanding peak login times - research question 4}
+  df_login_time <- 
+    df_logs %>% 
+    filter(Service=="systemd-logind")
+```
+
+```{r}
+  df_login_time_grouped <- df_login_time %>% 
+  group_by(Hour) %>% 
+   summarise(
+     Login_Events = n(),
+     Login_Events_Pct=round((n()/nrow(df_login_time))*100,digits=1)
+    ) %>% 
+    arrange(desc(Login_Events))
+```
+
+```{r peak login times table}
+  df_login_time_grouped %>% 
+  kbl() %>%
+  kable_minimal()
+```
+
+```{r peak login times bar chart}
+  df_login_time_grouped %>%
+  ggplot() +
+  geom_col(aes(Hour, Login_Events), fill = "PURPLE", width = 0.9)+ 
+  theme_bw()
+```
