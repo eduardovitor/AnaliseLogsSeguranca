@@ -6,6 +6,11 @@ Converter dados do arquivo **auth.log**, que armazena eventos relacionados à au
 
 A análise busca extrair insights relevantes sobre a autenticação de serviços no computador alvo.
 
+## Tecnologias
+
+- R (tidyverse, dplyr, kableExtra)
+- Python
+
 ## Base de dados para extração
 
 A base de dados para extração será uma amostra de 10K linhas do arquivo **auth.log** do Linux Mint que está instalado no meu notebook. A data de extração foi 12/09/2024. Tais dados representam logs de autenticação dos meses de Abril/2024 a Jun/2024.
